@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "184006771200",
+    "project_id": "freelance-connect-app",
+    "storage_bucket": "freelance-connect-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184006771200:android:5756dd94f4781401b70ee5",
+        "android_client_info": {
+          "package_name": "com.example.campus_freelance_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjfUhmjUnhcZWj4BNRpHZRgnx8x8xBTPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
