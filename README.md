@@ -41,10 +41,8 @@ Welcome to the **Campus Freelance App**! This app is designed to connect freelan
 
 ## Screenshots
 
-<img src="screenshots/job_list.png" alt="Job List Screen" width="300"/>
-<img src="screenshots/freelancer_list.png" alt="Freelancers List Screen" width="300"/>
-<img src="screenshots/conversations.png" alt="Messaging Screen" width="300"/>
-<img src="screenshots/job_management_screen.png" alt="Job Management Screen" width="300"/>
+<img src="screenshots/job_list.png" alt="Job List Screen" width="300"/><img src="screenshots/freelancer_list.png" alt="Freelancers List Screen" width="300"/>
+<img src="screenshots/conversations.png" alt="Messaging Screen" width="300"/><img src="screenshots/job_management_screen.png" alt="Job Management Screen" width="300"/>
 
 
 ## Installation
