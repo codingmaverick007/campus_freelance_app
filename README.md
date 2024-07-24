@@ -41,10 +41,10 @@ Welcome to the **Campus Freelance App**! This app is designed to connect freelan
 
 ## Screenshots
 
-![Job List Screen](screenshots/job list.png)
-![Freelancers List Screen](screenshots/freelancer list.png)
+![Job List Screen](screenshots/job_list.png)
+![Freelancers List Screen](screenshots/freelancer_list.png)
 ![Messaging Screen](screenshots/conversations.png)
-![Job Management Screen](screenshots/job management screen.png)
+![Job Management Screen](screenshots/job management_screen.png)
 
 ## Installation
 
