@@ -1,4 +1,4 @@
-# campus_freelance_app
+# Campus Freelance App (In Progress)
 
 A new Flutter project.
 
@@ -18,8 +18,6 @@ samples, guidance on mobile development, and a full API reference.
 Sure! Here's an impressive README file for your campus freelance app built with Flutter and Firebase:
 
 ---
-
-# Campus Freelance App
 
 Welcome to the **Campus Freelance App**! This app is designed to connect freelancers with job opportunities within a campus environment. With an easy-to-use interface, students can find job listings, bookmark jobs, message potential employers, and manage their own freelance projects. 
 
