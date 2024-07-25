@@ -666,54 +666,6 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  if (jobData['status'] == 'closed')
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                        ),
-                        onPressed: () {},
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12.0, horizontal: 24.0),
-                          child: Text(
-                            'Set as Completed',
-                            style: TextStyle(fontSize: 16.0),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (jobData['status'] == 'closed') const SizedBox(width: 10),
-                  if (jobData['status'] == 'closed')
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                        ),
-                        onPressed: () {
-                          _reopenJob(context);
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12.0, horizontal: 24.0),
-                          child: Text(
-                            'Reopen Job',
-                            style: TextStyle(fontSize: 16.0),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               )
             : ElevatedButton(

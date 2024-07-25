@@ -96,24 +96,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget customAppBar() {
     return Container(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: BoxDecoration(
-                shape: BoxShape.circle, color: Colors.grey.withOpacity(0.2)),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
           ),
-          const SizedBox(width: 122),
           const Text(
             'Edit Profile',
             style: TextStyle(color: Colors.black, fontSize: 25.0),
-          )
+          ),
+          const SizedBox(width: 48), // Placeholder for balance in AppBar
         ],
       ),
     );
@@ -133,99 +130,83 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Center(
                 child: GestureDetector(
                   onTap: () => _pickImage(ImageSource.gallery, true),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _profileImageFile != null
-                        ? FileImage(_profileImageFile!)
-                        : (_profileImageUrl != null
-                                ? NetworkImage(_profileImageUrl!)
-                                : const AssetImage('assets/avatar.png'))
-                            as ImageProvider,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundImage: _profileImageFile != null
+                            ? FileImage(_profileImageFile!)
+                            : (_profileImageUrl != null
+                                    ? NetworkImage(_profileImageUrl!)
+                                    : const AssetImage('assets/avatar.png'))
+                                as ImageProvider,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          radius: 15,
+                          backgroundColor: Colors.grey[300],
+                          child: const Icon(
+                            Icons.edit,
+                            size: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                label: 'Full Name',
                 initialValue: _fullName,
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
+                onSaved: (value) => _fullName = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your full name';
                   }
                   return null;
                 },
-                onSaved: (value) {
-                  _fullName = value!;
-                },
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                label: 'Email',
                 initialValue: _email,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
+                onSaved: (value) => _email = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
                   return null;
                 },
-                onSaved: (value) {
-                  _email = value!;
-                },
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                label: 'Programme',
                 initialValue: _programme,
-                decoration: InputDecoration(
-                  labelText: 'Programme',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
+                onSaved: (value) => _programme = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your programme';
                   }
                   return null;
                 },
-                onSaved: (value) {
-                  _programme = value!;
-                },
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                label: 'Student ID',
                 initialValue: _studentId,
-                decoration: InputDecoration(
-                  labelText: 'Student ID',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
+                onSaved: (value) => _studentId = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your student ID';
                   }
                   return null;
                 },
-                onSaved: (value) {
-                  _studentId = value!;
-                },
               ),
               const SizedBox(height: 20),
-
               SwitchListTile(
                 title: const Text('Freelancer'),
                 value: _isFreelancer,
@@ -236,94 +217,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              if (_isFreelancer)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      initialValue: _title,
-                      decoration: InputDecoration(
-                        labelText: 'Job Title',
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a job title';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        _title = value!;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ChipTags(
-                      list: _services,
-                      decoration: InputDecoration(
-                        labelText: 'Services Offered (comma separated)',
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
-                      separator: ',',
-                      chipColor: Colors.grey,
-                      createTagOnSubmit: true,
-                    ),
-                  ],
-                ),
+              if (_isFreelancer) buildFreelancerSection(),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                label: 'Bio',
                 initialValue: _bio,
-                decoration: InputDecoration(
-                  labelText: 'Bio',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                onSaved: (value) {
-                  _bio = value!;
-                },
+                onSaved: (value) => _bio = value,
               ),
               const SizedBox(height: 20),
-
-              TextFormField(
+              buildTextFormField(
+                label: 'Portfolio URL',
                 initialValue: _portfolioUrl,
-                decoration: InputDecoration(
-                  labelText: 'Portfolio URL',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                onSaved: (value) {
-                  _portfolioUrl = value!;
-                },
+                onSaved: (value) => _portfolioUrl = value,
               ),
               const SizedBox(height: 20),
-
-              TextFormField(
+              buildTextFormField(
+                label: 'Work Experience',
                 initialValue: _workExperience,
-                decoration: InputDecoration(
-                  labelText: 'Work Experience',
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                onSaved: (value) {
-                  _workExperience = value!;
-                },
+                onSaved: (value) => _workExperience = value,
               ),
-              // Add more fields as needed
-
               const SizedBox(height: 20),
               Center(
-                child: TextButton.icon(
+                child: ElevatedButton.icon(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
@@ -336,22 +251,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   },
                   icon: const Icon(
                     Icons.save_alt_rounded,
-                    color: Colors.blueGrey,
+                    color: Colors.white,
                     size: 16.0,
                   ),
                   label: const Text(
                     'Save',
                     style: TextStyle(
                       fontSize: 16.0,
-                      color: Colors.blueGrey,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 12.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildTextFormField({
+    required String label,
+    String? initialValue,
+    FormFieldValidator<String>? validator,
+    FormFieldSetter<String>? onSaved,
+  }) {
+    return TextFormField(
+      initialValue: initialValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.black),
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+      ),
+      validator: validator,
+      onSaved: onSaved,
+    );
+  }
+
+  Widget buildFreelancerSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildTextFormField(
+          label: 'Job Title',
+          initialValue: _title,
+          onSaved: (value) => _title = value,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter a job title';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+        ChipTags(
+          list: _services,
+          decoration: InputDecoration(
+            labelText: 'Services Offered (comma separated)',
+            border: OutlineInputBorder(
+              borderSide: const BorderSide(color: Colors.black),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+          ),
+          separator: ',',
+          chipColor: Colors.grey,
+          createTagOnSubmit: true,
+        ),
+      ],
     );
   }
 

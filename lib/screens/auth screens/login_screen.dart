@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(20.0),
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                     ),
                     controller: _emailTextController,
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'Password',
                       border: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(20.0),
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                       suffixIcon: GestureDetector(
                         onTap: () {

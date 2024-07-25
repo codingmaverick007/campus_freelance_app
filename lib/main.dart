@@ -1,6 +1,6 @@
 import 'package:campus_freelance_app/firebase_options.dart';
 import 'package:campus_freelance_app/providers/user_data_provider.dart';
-import 'package:campus_freelance_app/user_state.dart';
+import 'package:campus_freelance_app/screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -122,7 +122,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const UserState(),
+        home: SplashScreen(),
       ),
     );
   }

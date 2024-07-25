@@ -70,9 +70,9 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   foregroundColor: _isFreelancerSelected
-                      ? Colors.grey
-                      : Theme.of(context).primaryColor,
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                      ? Theme.of(context).primaryColor
+                      : Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
@@ -91,9 +91,9 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   foregroundColor: !_isFreelancerSelected
-                      ? Colors.grey
-                      : Theme.of(context).primaryColor,
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                      ? Theme.of(context).primaryColor
+                      : Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
@@ -130,7 +130,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Theme.of(context).primaryColor,
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),

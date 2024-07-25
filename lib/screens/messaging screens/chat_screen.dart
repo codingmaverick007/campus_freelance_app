@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -8,6 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:url_launcher/url_launcher.dart'; // For opening attachments
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -33,7 +36,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final ScrollController _listViewController = ScrollController();
-  final Map<String, String> _userImageUrlCache = {};
   bool _isSending = false;
   List<DocumentSnapshot> _messages = [];
 
@@ -105,64 +107,116 @@ class _ChatScreenState extends State<ChatScreen> {
     String senderID = FirebaseAuth.instance.currentUser!.uid;
     String conversationId = widget.conversationId;
 
-    UploadTask uploadTask = FirebaseStorage.instance
-        .ref()
-        .child('chat_attachments')
-        .child(conversationId)
-        .child(fileName)
-        .putFile(file);
+    try {
+      UploadTask uploadTask = FirebaseStorage.instance
+          .ref()
+          .child('chat_attachments')
+          .child(conversationId)
+          .child(fileName)
+          .putFile(file);
 
-    TaskSnapshot snapshot = await uploadTask;
+      TaskSnapshot snapshot = await uploadTask;
 
-    String downloadUrl = await snapshot.ref.getDownloadURL();
+      String downloadUrl = await snapshot.ref.getDownloadURL();
 
-    var message = {
-      'message': downloadUrl,
-      'senderID': senderID,
-      'timestamp': Timestamp.now(),
-      'type': 'attachment',
-      'fileName': fileName,
-    };
+      var message = {
+        'message': downloadUrl,
+        'senderID': senderID,
+        'timestamp': Timestamp.now(),
+        'type': 'attachment',
+        'fileName': fileName,
+      };
 
-    FirebaseFirestore.instance
-        .collection('conversations')
-        .doc(conversationId)
-        .collection('messages')
-        .add(message)
-        .then((_) {
-      setState(() {
-        _isSending = false;
-      });
-    }).catchError((error) {
+      await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .add(message);
+    } catch (error) {
       print('Failed to send attachment: $error');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Failed to send attachment'),
       ));
+    } finally {
       setState(() {
         _isSending = false;
       });
-    });
-  }
-
-  Future<String> _getUserImageUrl(String userId) async {
-    if (_userImageUrlCache.containsKey(userId)) {
-      return _userImageUrlCache[userId]!;
-    } else {
-      var userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      var imageUrl = userDoc['profileImageUrl'] ?? '';
-      _userImageUrlCache[userId] = imageUrl;
-      return imageUrl;
     }
   }
 
   Future<void> _pickAttachment() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.isNotEmpty) {
-      File file = File(result.files.single.path!);
-      await _sendAttachment(file);
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      if (result != null && result.files.isNotEmpty) {
+        if (kIsWeb) {
+          // Handle file for web
+          Uint8List? fileBytes = result.files.single.bytes;
+          if (fileBytes != null) {
+            String fileName = result.files.single.name;
+            await _sendAttachmentWeb(fileBytes, fileName);
+          }
+        } else {
+          // Handle file for mobile
+          File file = File(result.files.single.path!);
+          await _sendAttachment(file);
+        }
+      } else {
+        print("No file selected");
+      }
+    } catch (e) {
+      print("Error picking file: $e");
+    }
+  }
+
+  Future<void> _sendAttachmentWeb(Uint8List fileBytes, String fileName) async {
+    setState(() {
+      _isSending = true;
+    });
+
+    String senderID = FirebaseAuth.instance.currentUser!.uid;
+    String conversationId = widget.conversationId;
+
+    try {
+      print("Starting file upload: $fileName");
+
+      // Create a reference to the storage location
+      Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('chat_attachments')
+          .child(conversationId)
+          .child(fileName);
+
+      // Upload the file
+      UploadTask uploadTask = storageRef.putData(fileBytes);
+
+      TaskSnapshot snapshot = await uploadTask;
+
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      var message = {
+        'message': downloadUrl,
+        'senderID': senderID,
+        'timestamp': Timestamp.now(),
+        'type': 'attachment',
+        'fileName': fileName,
+      };
+
+      await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .add(message);
+
+      print("File uploaded and message sent");
+    } catch (error) {
+      print('Failed to send attachment: $error');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to send attachment'),
+      ));
+    } finally {
+      setState(() {
+        _isSending = false;
+      });
     }
   }
 
@@ -173,7 +227,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.receiverName),
+        title: Row(
+          children: <Widget>[
+            CircleAvatar(
+              radius: 20,
+              backgroundImage: widget.receiverImage.isNotEmpty
+                  ? NetworkImage(widget.receiverImage)
+                  : const AssetImage('assets/avatar.png') as ImageProvider,
+            ),
+            const SizedBox(width: 10),
+            Text(widget.receiverName),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Column(
@@ -217,17 +282,9 @@ class _ChatScreenState extends State<ChatScreen> {
               var messageData = _messages[index].data() as Map<String, dynamic>;
               bool isMe = messageData['senderID'] ==
                   FirebaseAuth.instance.currentUser!.uid;
-              return FutureBuilder<String>(
-                future: _getUserImageUrl(messageData['senderID']),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      !snapshot.hasError) {
-                    return _messageBubble(
-                        isMe, messageData, snapshot.data ?? '');
-                  } else {
-                    return _messageBubble(isMe, messageData, '');
-                  }
-                },
+              return _messageBubble(
+                isMe,
+                messageData,
               );
             },
           );
@@ -236,8 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _messageBubble(
-      bool isOwnMessage, Map<String, dynamic> message, String senderImageUrl) {
+  Widget _messageBubble(bool isOwnMessage, Map<String, dynamic> message) {
     var timestamp = message['timestamp'] as Timestamp?;
     var messageContent = message['message'];
     bool isAttachment = message['type'] == 'attachment';
@@ -253,32 +309,22 @@ class _ChatScreenState extends State<ChatScreen> {
         mainAxisAlignment:
             isOwnMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: <Widget>[
-          if (!isOwnMessage) _userImageWidget(senderImageUrl),
-          SizedBox(width: _deviceWidth * 0.02),
+          if (!isOwnMessage) ...[
+            SizedBox(width: _deviceWidth * 0.02),
+          ],
           isAttachment
               ? _attachmentMessageBubble(isOwnMessage, messageContent,
                   formattedTime, message['fileName'])
               : _textMessageBubble(isOwnMessage, messageContent, formattedTime),
           SizedBox(width: _deviceWidth * 0.02),
-          if (isOwnMessage) _userImageWidget(senderImageUrl),
+          if (isOwnMessage) ...[
+            if (_isSending) ...[
+              SizedBox(width: 20),
+              CircularProgressIndicator(strokeWidth: 2),
+            ],
+            SizedBox(width: _deviceWidth * 0.02),
+          ],
         ],
-      ),
-    );
-  }
-
-  Widget _userImageWidget(String imageUrl) {
-    double _imageRadius = _deviceHeight * 0.04; // Smaller image size
-    return Container(
-      height: _imageRadius,
-      width: _imageRadius,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(500),
-        image: DecorationImage(
-          fit: BoxFit.cover,
-          image: imageUrl.isNotEmpty
-              ? NetworkImage(imageUrl)
-              : const AssetImage('assets/avatar.png') as ImageProvider,
-        ),
       ),
     );
   }
@@ -333,14 +379,27 @@ class _ChatScreenState extends State<ChatScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          GestureDetector(
-            onTap: () {
-              // Code to open the attachment
-            },
-            child: Text(
-              fileName,
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+          Row(
+            children: <Widget>[
+              Icon(Icons.attach_file, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    if (await canLaunchUrl(url as Uri)) {
+                      await launchUrl(url as Uri);
+                    } else {
+                      throw 'Could not launch $url';
+                    }
+                  },
+                  child: Text(
+                    fileName,
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 4),
           Text(

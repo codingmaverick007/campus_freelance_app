@@ -16,6 +16,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _requirementsController;
   late TextEditingController _locationController;
+  late TextEditingController _tagController;
   late List<String> _tags;
 
   @override
@@ -25,6 +26,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
     _descriptionController = TextEditingController();
     _requirementsController = TextEditingController();
     _locationController = TextEditingController();
+    _tagController = TextEditingController();
     _tags = [];
 
     _loadJobDetails();
@@ -69,6 +71,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
   void _addTag(String tag) {
     setState(() {
       _tags.add(tag);
+      _tagController.clear();
     });
   }
 
@@ -83,12 +86,6 @@ class _EditJobScreenState extends State<EditJobScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Job'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveJobDetails,
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -98,9 +95,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
+                buildTextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Job Title'),
+                  label: 'Job Title',
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a job title';
@@ -109,34 +106,33 @@ class _EditJobScreenState extends State<EditJobScreen> {
                   },
                 ),
                 const SizedBox(height: 16.0),
-                TextFormField(
+                buildTextFormField(
                   controller: _descriptionController,
-                  decoration:
-                      const InputDecoration(labelText: 'Job Description'),
+                  label: 'Job Description',
+                  maxLines: 3,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a job description';
                     }
                     return null;
                   },
-                  maxLines: 3,
                 ),
                 const SizedBox(height: 16.0),
-                TextFormField(
+                buildTextFormField(
                   controller: _requirementsController,
-                  decoration: const InputDecoration(labelText: 'Requirements'),
+                  label: 'Requirements',
+                  maxLines: 3,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the job requirements';
                     }
                     return null;
                   },
-                  maxLines: 3,
                 ),
                 const SizedBox(height: 16.0),
-                TextFormField(
+                buildTextFormField(
                   controller: _locationController,
-                  decoration: const InputDecoration(labelText: 'Location'),
+                  label: 'Location',
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the job location';
@@ -152,22 +148,84 @@ class _EditJobScreenState extends State<EditJobScreen> {
                     return Chip(
                       label: Text(tag),
                       onDeleted: () => _removeTag(tag),
+                      backgroundColor: Colors.blueAccent,
+                      labelStyle: const TextStyle(color: Colors.white),
                     );
                   }).toList(),
                 ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Add a tag'),
+                buildTextFormField(
+                  controller: _tagController,
+                  label: 'Add a tag',
                   onFieldSubmitted: (value) {
                     if (value.isNotEmpty) {
                       _addTag(value);
                     }
                   },
                 ),
+                const SizedBox(height: 16.0),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (_tagController.text.isNotEmpty) {
+                        _addTag(_tagController.text);
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Tag'),
+                    style: ElevatedButton.styleFrom(
+                        iconColor: Colors.blue,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.blue,
+                        maximumSize: Size(200, 50)),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton.icon(
+          onPressed: _saveJobDetails,
+          icon: const Icon(Icons.save),
+          label: Text(
+            'Save',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            iconColor: Colors.white,
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildTextFormField({
+    required TextEditingController controller,
+    required String label,
+    int maxLines = 1,
+    FormFieldValidator<String>? validator,
+    ValueChanged<String>? onFieldSubmitted,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+      ),
+      validator: validator,
+      maxLines: maxLines,
+      onFieldSubmitted: onFieldSubmitted,
     );
   }
 }

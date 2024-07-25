@@ -191,6 +191,9 @@ class IntroPage extends StatelessWidget {
           Column(
             children: buttons,
           ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.01,
+          )
         ],
       ),
     );

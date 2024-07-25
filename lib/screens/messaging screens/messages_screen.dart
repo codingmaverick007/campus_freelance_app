@@ -1,137 +1,242 @@
 import 'package:campus_freelance_app/screens/messaging%20screens/chat_screen.dart';
+import 'package:campus_freelance_app/widgets/sliver_app_bar.dart';
 import 'package:card_loading/card_loading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'dart:async';
 
-class ConversationsScreen extends StatelessWidget {
+class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
 
   @override
+  _ConversationsScreenState createState() => _ConversationsScreenState();
+}
+
+class _ConversationsScreenState extends State<ConversationsScreen> {
+  String _searchQuery = '';
+  Timer? _debounce;
+  String profileImageUrl = 'assets/avatar.png';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfileImageUrl();
+  }
+
+  Future<void> _fetchProfileImageUrl() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          setState(() {
+            profileImageUrl =
+                userData['profileImageUrl'] ?? 'assets/avatar.png';
+          });
+        }
+      } catch (e) {
+        // Handle errors if needed
+        print('Error fetching profile image URL: $e');
+      }
+    }
+  }
+
+  void _updateSearchQuery(String query) {
+    setState(() {
+      _searchQuery = query.toLowerCase();
+    });
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {}); // Trigger rebuild with updated search query
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Conversations'),
-        ),
-        body: const ConversationsList(),
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverPersistentHeader(
+            delegate: SliverSearchAppBar(
+              maxHeight: 180,
+              minHeight: 100,
+              searchBar: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _searchField(),
+              ),
+              profileImageUrl: profileImageUrl,
+              onSuffixIconTap: () {
+                // Handle the suffix icon tap
+              },
+            ),
+            pinned: true,
+          ),
+          StreamBuilder<QuerySnapshot>(
+            stream: _getConversationsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return SliverFillRemaining(
+                  child: Center(child: Text('Error: ${snapshot.error}')),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return SliverFillRemaining(
+                  child:
+                      Center(child: Text("You don't have any conversations")),
+                );
+              }
+
+              var conversations = snapshot.data!.docs;
+              return FutureBuilder<List<ConversationItemData>>(
+                future: _getFilteredConversations(conversations),
+                builder: (context, futureSnapshot) {
+                  if (futureSnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (futureSnapshot.hasError) {
+                    return SliverFillRemaining(
+                      child:
+                          Center(child: Text('Error: ${futureSnapshot.error}')),
+                    );
+                  }
+
+                  if (!futureSnapshot.hasData || futureSnapshot.data!.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(child: Text("No results found")),
+                    );
+                  }
+
+                  var filteredConversations = futureSnapshot.data!;
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        var conversationData = filteredConversations[index];
+                        return ConversationItem(conversationData);
+                      },
+                      childCount: filteredConversations.length,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
-}
 
-class ConversationsList extends StatelessWidget {
-  const ConversationsList({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final String userId = FirebaseAuth.instance.currentUser!.uid;
-    return StreamBuilder<QuerySnapshot>(
-      stream: _getConversationsStream(userId),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("You don't have any conversations"));
-        }
-
-        var conversations = snapshot.data!.docs;
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-          itemCount: conversations.length,
-          itemBuilder: (context, index) {
-            var conversationData = conversations[index];
-            return ConversationItem(conversationData);
-          },
-        );
-      },
+  Widget _searchField() {
+    return TextFormField(
+      onChanged: _updateSearchQuery,
+      decoration: InputDecoration(
+        hintText: 'Search by name',
+        fillColor: Colors.white,
+        filled: true,
+        prefixIcon: const Icon(Icons.search),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
     );
   }
 
-  Stream<QuerySnapshot> _getConversationsStream(String uid) {
+  Stream<QuerySnapshot> _getConversationsStream() {
+    final String userId = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
         .collection('conversations')
-        .where('members', arrayContains: uid)
+        .where('members', arrayContains: userId)
         .snapshots();
+  }
+
+  Future<List<ConversationItemData>> _getFilteredConversations(
+      List<QueryDocumentSnapshot> conversations) async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    List<ConversationItemData> filteredConversations = [];
+
+    for (var conversation in conversations) {
+      String receiverId = conversation['members'][0] == userId
+          ? conversation['members'][1]
+          : conversation['members'][0];
+
+      var userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(receiverId)
+          .get();
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        String fullName = userData['fullName'].toLowerCase();
+
+        if (fullName.contains(_searchQuery)) {
+          filteredConversations
+              .add(ConversationItemData(conversation, userData));
+        }
+      }
+    }
+
+    return filteredConversations;
   }
 }
 
-class ConversationItem extends StatelessWidget {
+class ConversationItemData {
   final QueryDocumentSnapshot conversation;
+  final Map<String, dynamic> userData;
 
-  const ConversationItem(this.conversation, {super.key});
+  ConversationItemData(this.conversation, this.userData);
+}
+
+class ConversationItem extends StatelessWidget {
+  final ConversationItemData conversationItemData;
+
+  const ConversationItem(this.conversationItemData, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    String receiverId =
-        conversation['members'][0] == FirebaseAuth.instance.currentUser!.uid
-            ? conversation['members'][1]
-            : conversation['members'][0];
+    String receiverId = conversationItemData.conversation['members'][0] ==
+            FirebaseAuth.instance.currentUser!.uid
+        ? conversationItemData.conversation['members'][1]
+        : conversationItemData.conversation['members'][0];
 
-    return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('users').doc(receiverId).get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // While waiting for the future to complete, show a loading card
-          return ListTile(
-            title: CardLoading(
-              height: 20,
-              width: 150,
-              borderRadius: BorderRadius.circular(8),
-              margin: const EdgeInsets.only(bottom: 8),
+    return ListTile(
+      title: Text(conversationItemData.userData['fullName']),
+      subtitle: LastMessage(conversationItemData.conversation.id),
+      leading: CircleAvatar(
+        backgroundImage:
+            conversationItemData.userData['profileImageUrl'] != null
+                ? NetworkImage(conversationItemData.userData['profileImageUrl'])
+                : AssetImage('assets/avatar.png') as ImageProvider,
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              conversationId: conversationItemData.conversation.id,
+              receiverId: receiverId,
+              receiverName: conversationItemData.userData['fullName'],
+              receiverImage: conversationItemData.userData['profileImageUrl'] ??
+                  'assets/avatar.png',
             ),
-            leading: CardLoading(
-              borderRadius: BorderRadius.circular(20),
-              height: 40,
-              width: 40,
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          // If there's an error, display an error message
-          return ListTile(
-            title: Text('Error: ${snapshot.error}'),
-          );
-        }
-
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          // If data is not available or user document doesn't exist
-          return const ListTile(
-            title: Text('User not found'),
-          );
-        }
-
-        var userData = snapshot.data!.data() as Map<String, dynamic>;
-        return ListTile(
-          title: Text(userData['fullName']),
-          subtitle: LastMessage(conversation.id),
-          leading: CircleAvatar(
-            backgroundImage: NetworkImage(userData['profileImageUrl']),
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  conversationId: conversation.id,
-                  receiverId: receiverId,
-                  receiverName: userData['fullName'],
-                  receiverImage: userData['profileImageUrl'],
-                ),
-              ),
-            );
-          },
         );
       },
     );

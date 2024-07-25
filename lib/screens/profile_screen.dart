@@ -1,4 +1,5 @@
 import 'package:campus_freelance_app/screens/auth%20screens/login_screen.dart';
+import 'package:campus_freelance_app/screens/fullscreen_image.dart';
 import 'package:campus_freelance_app/services/fetch_user_details_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -58,23 +59,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Center(
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundImage: _userData!['profileImageUrl'] !=
-                                      null
-                                  ? NetworkImage(_userData!['profileImageUrl'])
-                                  : const AssetImage('assets/avatar.png')
-                                      as ImageProvider,
-                              onBackgroundImageError: (exception, stackTrace) {
-                                print(
-                                    "Error loading network image: $exception");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text('Error loading profile image'),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FullScreenImageView(
+                                      imageUrl: _userData!['profileImageUrl']!,
+                                    ),
                                   ),
                                 );
                               },
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundImage:
+                                    _userData!['profileImageUrl'] != null
+                                        ? NetworkImage(
+                                            _userData!['profileImageUrl'])
+                                        : const AssetImage('assets/avatar.png')
+                                            as ImageProvider,
+                                onBackgroundImageError:
+                                    (exception, stackTrace) {
+                                  print(
+                                      "Error loading network image: $exception");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Error loading profile image'),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),

@@ -24,9 +24,8 @@ class _FinishProfileScreenState extends State<FinishProfileScreen> {
   final _fullNameController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _pickImage() async {
-    XFile? pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  Future<void> _pickImage(ImageSource source) async {
+    XFile? pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
       Uint8List pickedImageBytes = await pickedFile.readAsBytes();
       setState(() {
@@ -35,6 +34,36 @@ class _FinishProfileScreenState extends State<FinishProfileScreen> {
       Provider.of<UserData>(context, listen: false)
           .updateProfileImage(File(pickedFile.path));
     }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Choose image source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text('Camera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library),
+              title: Text('Gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<String> _uploadProfileImage(Uint8List imageBytes) async {
@@ -167,7 +196,7 @@ class _FinishProfileScreenState extends State<FinishProfileScreen> {
                         right: 0,
                         child: IconButton(
                           icon: const Icon(Icons.camera_alt),
-                          onPressed: _pickImage,
+                          onPressed: _showImageSourceDialog,
                         ),
                       ),
                     ],

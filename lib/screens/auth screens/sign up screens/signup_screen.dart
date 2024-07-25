@@ -1,3 +1,4 @@
+import 'package:campus_freelance_app/screens/auth%20screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
@@ -64,7 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           labelText: 'Email',
                           border: OutlineInputBorder(
                             borderSide: const BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(20.0),
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
                         ),
                         onChanged: (value) => userData.updateEmail(value),
@@ -83,7 +84,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           labelText: 'Password',
                           border: OutlineInputBorder(
                             borderSide: const BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(20.0),
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
                         ),
                         obscureText: true,
@@ -119,6 +120,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginScreen()),
+                          );
+                        },
+                        child: Text('Already have an account? Sign in',
+                            style: Theme.of(context).textTheme.labelMedium),
+                      ),
                     ],
                   ),
                 ),

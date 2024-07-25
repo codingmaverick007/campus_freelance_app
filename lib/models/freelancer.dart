@@ -9,6 +9,7 @@ class Freelancer {
   final String? portfolio;
   final List<String>? skills;
   final List<String>? hobbiesAndInterests;
+  double rating;
 
   Freelancer({
     required this.id,
@@ -21,6 +22,7 @@ class Freelancer {
     this.portfolio,
     this.skills,
     this.hobbiesAndInterests,
+    this.rating = 0.0,
   });
 
   factory Freelancer.fromMap(Map<String, dynamic> data, String id) {

@@ -18,6 +18,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _programmeController = TextEditingController();
   final _studentIdController = TextEditingController();
+  File? _uploadedImage;
 
   @override
   void dispose() {
@@ -26,10 +27,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     super.dispose();
   }
 
-  void _pickImage(BuildContext context) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  void _pickImage(BuildContext context, ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
+      setState(() {
+        _uploadedImage = File(pickedFile.path);
+      });
       Provider.of<UserData>(context, listen: false)
           .updateStudentIdImage(File(pickedFile.path));
     }
@@ -55,6 +58,22 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all fields')),
+      );
+    }
+  }
+
+  void _viewImage(BuildContext context) {
+    if (_uploadedImage != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(),
+            body: Center(
+              child: Image.file(_uploadedImage!),
+            ),
+          ),
+        ),
       );
     }
   }
@@ -134,19 +153,56 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           },
                         ),
                         const SizedBox(height: 20),
+                        if (_uploadedImage != null)
+                          GestureDetector(
+                            onTap: () => _viewImage(context),
+                            child: Image.file(
+                              _uploadedImage!,
+                              height: 150,
+                              width: 150,
+                            ),
+                          ),
+                        const SizedBox(height: 20),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            foregroundColor: Theme.of(context).primaryColor,
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                                 vertical: 16.0, horizontal: 24.0),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                          icon: Icon(Icons.image),
+                          icon: const Icon(Icons.image),
                           label: Text('Pick Student ID Image',
                               style: Theme.of(context).textTheme.labelSmall),
-                          onPressed: () => _pickImage(context),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (context) => SafeArea(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ListTile(
+                                      leading: Icon(Icons.camera),
+                                      title: Text('Take a Picture'),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _pickImage(context, ImageSource.camera);
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: Icon(Icons.photo),
+                                      title: Text('Upload from Gallery'),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _pickImage(
+                                            context, ImageSource.gallery);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton(
@@ -160,7 +216,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           ),
                           onPressed: () => _saveDetails(context),
                           child: Text('Save and Continue',
-                              style: Theme.of(context).textTheme.labelSmall),
+                              style: Theme.of(context).textTheme.labelLarge),
                         ),
                       ],
                     ),

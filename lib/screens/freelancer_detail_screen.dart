@@ -1,4 +1,5 @@
 import 'package:campus_freelance_app/screens/all_reviews_screen.dart';
+import 'package:campus_freelance_app/screens/fullscreen_image.dart';
 import 'package:campus_freelance_app/screens/messaging%20screens/chat_screen.dart';
 import 'package:campus_freelance_app/services/rating_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -97,59 +98,71 @@ class _FreelancerDetailScreenState extends State<FreelancerDetailScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 70,
-                      backgroundImage: freelancer!.imageUrl != null &&
-                              freelancer!.imageUrl!.isNotEmpty
-                          ? NetworkImage(freelancer!.imageUrl!)
-                          : const AssetImage('assets/avatar.jpg')
-                              as ImageProvider,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 4,
-                      child: FutureBuilder<double>(
-                        future: ratingService
-                            .calculateAverageRating(freelancer!.id),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          } else if (snapshot.hasError) {
-                            return const Icon(Icons.error, color: Colors.red);
-                          } else {
-                            final averageRating = snapshot.data ?? 0.0;
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blueAccent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    averageRating.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        },
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FullScreenImageView(
+                          imageUrl: freelancer!.imageUrl!,
+                        ),
                       ),
-                    ),
-                  ],
+                    );
+                  },
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: MediaQuery.of(context).size.height * 0.07,
+                        backgroundImage: freelancer!.imageUrl != null &&
+                                freelancer!.imageUrl!.isNotEmpty
+                            ? NetworkImage(freelancer!.imageUrl!)
+                            : const AssetImage('assets/avatar.jpg')
+                                as ImageProvider,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 4,
+                        child: FutureBuilder<double>(
+                          future: ratingService
+                              .calculateAverageRating(freelancer!.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return const Icon(Icons.error, color: Colors.red);
+                            } else {
+                              final averageRating = snapshot.data ?? 0.0;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      averageRating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -387,7 +400,7 @@ class _FreelancerDetailScreenState extends State<FreelancerDetailScreen> {
 
   Widget _buildMessageButton() {
     return FloatingActionButton(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
       onPressed: () async {
         final currentUser = _auth.currentUser;
